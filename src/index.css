@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-mqtt: #8B5CF6;
+  --color-coap: #10B981;
+  --color-amqp: #F59E0B;
+  --color-dark-900: #0a0a0f;
+  --color-dark-800: #12121a;
+  --color-dark-700: #1a1a2e;
+  --color-dark-600: #22223a;
+  --color-dark-500: #2a2a44;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a44 transparent;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-right {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.packet-dot {
+  animation: slide-right 1.5s ease-in-out infinite;
+}
+
+.glow-mqtt { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+.glow-coap { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+.glow-amqp { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+
+/* ─── New Architecture Animations ─── */
+
+/* Packet moving left-to-right (Hello) */
+@keyframes packet-send {
+  0% { left: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  45% { opacity: 1; }
+  50% { left: 100%; opacity: 0; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* Packet moving right-to-left (ACK) */
+@keyframes packet-return {
+  0% { right: 100%; opacity: 0; }
+  50% { right: 100%; opacity: 0; }
+  55% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { right: 0%; opacity: 0; }
+}
+
+/* CoAP — fast (0.8s) */
+.packet-send-fast {
+  animation: packet-send 0.8s ease-in-out infinite;
+}
+.packet-return-fast {
+  animation: packet-return 0.8s ease-in-out infinite;
+}
+
+/* MQTT — medium (1.2s) */
+.packet-send-medium {
+  animation: packet-send 1.2s ease-in-out infinite;
+}
+.packet-return-medium {
+  animation: packet-return 1.2s ease-in-out infinite;
+}
+
+/* AMQP — slow (1.8s) */
+.packet-send-slow {
+  animation: packet-send 1.8s ease-in-out infinite;
+}
+.packet-return-slow {
+  animation: packet-return 1.8s ease-in-out infinite;
+}
+
+/* Pulsing ring around device/server */
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.ping-ring {
+  animation: ping-ring 1.5s ease-out infinite;
+}
+
+/* Signal wave from device */
+@keyframes signal-wave {
+  0% { transform: scaleX(0); opacity: 0.8; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.signal-wave {
+  animation: signal-wave 1.2s ease-out infinite;
+}
+.signal-wave-delayed {
+  animation: signal-wave 1.2s ease-out 0.4s infinite;
+}
+.signal-wave-delayed-2 {
+  animation: signal-wave 1.2s ease-out 0.8s infinite;
+}
+
+/* Status badge blink */
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.status-blink {
+  animation: status-blink 0.8s ease-in-out infinite;
+}
+
+/* Latency flash */
+@keyframes latency-flash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.latency-flash {
+  animation: latency-flash 0.4s ease-out;
+}
+
+/* Device/Server glow pulse */
+@keyframes box-pulse {
+  0%, 100% { box-shadow: 0 0 0px transparent; }
+  50% { box-shadow: 0 0 25px var(--glow-color, rgba(99,102,241,0.4)); }
+}
+.box-pulse {
+  animation: box-pulse 1.5s ease-in-out infinite;
+}
+
+/* Data stream particles */
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-20px) translateX(10px); opacity: 0; }
+}
+
+/* Iteration counter bounce */
+@keyframes counter-tick {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.counter-tick {
+  animation: counter-tick 0.3s ease-out;
+}

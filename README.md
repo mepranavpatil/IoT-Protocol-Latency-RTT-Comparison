@@ -1,319 +1,665 @@
-# 🌐 IoT Protocol Latency (RTT) Comparison Demo
+# 🌐 IoT Protocol Latency (RTT) Comparison Dashboard
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Node-RED](https://img.shields.io/badge/Node--RED-3.1-8F0000?logo=nodered&logoColor=white)](https://nodered.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react\&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript\&logoColor=white)](https://typescriptlang.org)
+[![Node-RED](https://img.shields.io/badge/Node--RED-3.1-8F0000?logo=nodered\&logoColor=white)](https://nodered.org)
 [![Mosquitto](https://img.shields.io/badge/Mosquitto-2.0-3C1361)](https://mosquitto.org)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.12-FF6600?logo=rabbitmq&logoColor=white)](https://rabbitmq.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-> **Interactive RTT (Round-Trip Time) comparison of MQTT, CoAP, and AMQP protocols** — featuring a real Node-RED flow visualization, live Mosquitto MQTT broker monitoring, and a Node-RED Dashboard with gauges.
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.12-FF6600?logo=rabbitmq\&logoColor=white)](https://rabbitmq.com)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker\&logoColor=white)](https://docker.com)
 
 ---
 
-## 🎯 What This Project Does
+# 📖 Project Overview
 
-```
-Device → Protocol → Broker / Server → Response → Device
-                         ↕
-         RTT = t_response − t_request  (ms)
-```
+The **IoT Protocol Latency (RTT) Comparison Dashboard** is an educational and analytical platform designed to compare the communication performance of three major IoT protocols:
 
-Measures and compares **Round-Trip Time (RTT)** across three IoT protocols:
+* **MQTT (Message Queuing Telemetry Transport)**
+* **CoAP (Constrained Application Protocol)**
+* **AMQP (Advanced Message Queuing Protocol)**
 
-| Protocol | Transport | Avg RTT | Broker / Server |
-|----------|-----------|---------|-----------------|
-| **MQTT** | TCP | ~45 ms | Mosquitto `:1883` |
-| **CoAP** | UDP | ~30 ms | aiocoap `:5683` |
-| **AMQP** | TCP | ~80 ms | RabbitMQ `:5672` |
+The project simulates real IoT communication workflows and measures the **Round Trip Time (RTT)** required for a message to travel from a device to a broker/server and return with an acknowledgment.
+
+The system combines:
+
+* A modern React-based visualization dashboard
+* Node-RED flow orchestration
+* Mosquitto MQTT broker
+* RabbitMQ AMQP broker
+* CoAP server implementation
+* Real-time charts and analytics
+* Docker containerization for deployment
+
+This project helps students, researchers, and IoT developers understand how communication protocols behave under different conditions and which protocol is best suited for specific IoT applications.
 
 ---
 
-## 🔴🦟 How Node-RED + MQTT Broker Work in This Project
+# 🎯 Problem Statement
 
-This is the core of the project. Here is the exact data flow:
+IoT devices communicate using different protocols depending on power consumption, bandwidth, latency requirements, and reliability.
 
-### 1 · Overall Architecture
+Choosing the wrong protocol can result in:
 
+* Increased network congestion
+* Higher power consumption
+* Slow device responses
+* Scalability issues
+
+This project analyzes and visualizes the latency characteristics of MQTT, CoAP, and AMQP to help determine the most efficient protocol for a given IoT scenario.
+
+---
+
+# 🎯 Objectives
+
+The main objectives of this project are:
+
+### 1. Measure Protocol Performance
+
+Calculate Round Trip Time (RTT) for:
+
+* MQTT
+* CoAP
+* AMQP
+
+### 2. Visualize Communication Flow
+
+Display how data travels through:
+
+```text id="xz8vcm"
+IoT Device
+   ↓
+Protocol Layer
+   ↓
+Broker / Server
+   ↓
+Acknowledgement
+   ↓
+IoT Device
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Node-RED  :1880                      │
-│                                                             │
-│  [inject] ──► [mqtt out] ──────────────────► [mqtt in]     │
-│      │             │                              │         │
-│      │        Publish msg                   Receive ACK     │
-│      │        t₁ = now()                    t₂ = now()     │
-│      │                                           │          │
-│      └───────────────────────────────► [function node]     │
-│                                         RTT = t₂ − t₁     │
-│                                                │            │
-│                                         [ui_gauge]          │
-│                                         [ui_chart]          │
-│                                    Dashboard at /ui         │
-└─────────────────────────────────────────────────────────────┘
-                         │  MQTT pub/sub
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Mosquitto MQTT Broker  :1883                   │
-│                                                             │
-│  Topic: iot/latency/mqtt  ◄──  publisher (Hello + ts)      │
-│  Topic: iot/response/mqtt  ──► subscriber (ACK)            │
-└─────────────────────────────────────────────────────────────┘
+
+### 3. Compare Protocol Characteristics
+
+Evaluate:
+
+* Speed
+* Reliability
+* Overhead
+* Scalability
+* Resource consumption
+
+### 4. Demonstrate Real IoT Infrastructure
+
+Use industry-standard tools:
+
+* Node-RED
+* Mosquitto
+* RabbitMQ
+* Docker
+
+---
+
+# 🧠 Understanding RTT (Round Trip Time)
+
+RTT represents the total time required for:
+
+1. Sending a request
+2. Processing the request
+3. Receiving the response
+
+Formula:
+
+```text id="ub14zy"
+RTT = Response Time − Request Time
 ```
 
-### 2 · Step-by-Step Data Flow
+Example:
 
-| Step | Node | What Happens |
-|------|------|-------------|
-| **1** | `inject` | Fires every 1 second — stamps `t₁ = Date.now()` into payload |
-| **2** | `mqtt out` | Publishes `{msg:"Hello", ts:t₁}` to **`iot/latency/mqtt`** via Mosquitto at `:1883` |
-| **3** | **Mosquitto** | Receives the publish, routes it to all clients subscribed to `iot/latency/mqtt` |
-| **4** | Python script | Subscribed to `iot/latency/mqtt`, receives message, immediately publishes ACK to `iot/response/mqtt` |
-| **5** | `mqtt in` | Node-RED subscribes to `iot/response/mqtt`, receives the ACK |
-| **6** | `function` | Calculates `RTT = Date.now() - msg.payload.ts` |
-| **7** | `ui_gauge` + `ui_chart` | Displays live RTT on the Node-RED Dashboard at `localhost:1880/ui` |
+```text id="z73h9c"
+Request Sent   : 10:00:00.100
+Response Arrive: 10:00:00.145
 
-### 3 · Why Mosquitto?
+RTT = 45 ms
+```
 
-Mosquitto is a **lightweight open-source MQTT broker** that:
-- Routes messages between publishers and subscribers using **topics** (like channels)
-- Supports **QoS 0, 1, 2** — balancing speed vs. delivery guarantee
-- Runs on any device including Raspberry Pi, making it ideal for real IoT deployments
-- In this project it acts as the **central message router** for all MQTT traffic
+Lower RTT means:
 
-### 4 · Why Node-RED?
+* Faster communication
+* Better user experience
+* Lower network delay
 
-Node-RED is a **visual flow programming tool** for IoT that:
-- Lets you wire together hardware devices, APIs, and services without writing boilerplate code
-- Has built-in nodes for `mqtt in/out`, `inject`, `function`, and dashboard (`ui_gauge`, `ui_chart`)
-- Provides a live **Dashboard** at `/ui` showing gauges and charts in real-time
-- In this project it **orchestrates** the entire inject → publish → receive → calculate → display pipeline
+---
 
-### 5 · Node-RED Flow (Import This JSON)
+# 📡 Protocol Overview
 
-Open Node-RED → Menu `☰` → Import → Clipboard → paste below → Deploy:
+## MQTT
+
+### What is MQTT?
+
+MQTT is a lightweight messaging protocol specifically designed for IoT devices.
+
+### Communication Model
+
+```text id="6qv9dx"
+Publisher
+    │
+    ▼
+MQTT Broker
+    │
+    ▼
+Subscriber
+```
+
+### Why MQTT?
+
+* Low bandwidth consumption
+* Reliable TCP communication
+* Publish/Subscribe architecture
+* Ideal for sensors and smart devices
+
+### Real World Usage
+
+* Smart Homes
+* Industrial IoT
+* Agriculture Monitoring
+* Vehicle Tracking
+
+### Expected RTT
+
+```text id="75d4to"
+~45 ms
+```
+
+---
+
+## CoAP
+
+### What is CoAP?
+
+CoAP is a lightweight protocol built on UDP.
+
+Unlike MQTT, it does not require a broker.
+
+### Communication Model
+
+```text id="nd7q70"
+Client
+   │
+   ▼
+CoAP Server
+   │
+   ▼
+Response
+```
+
+### Why CoAP?
+
+* Very low overhead
+* Fast transmission
+* Minimal resource usage
+
+### Real World Usage
+
+* Battery-powered devices
+* Smart lighting
+* Wearable devices
+
+### Expected RTT
+
+```text id="o3t7uq"
+~30 ms
+```
+
+---
+
+## AMQP
+
+### What is AMQP?
+
+AMQP is an enterprise-grade messaging protocol.
+
+It provides advanced routing, security, and message guarantees.
+
+### Communication Model
+
+```text id="1tdqf6"
+Publisher
+    │
+    ▼
+Exchange
+    │
+    ▼
+Queue
+    │
+    ▼
+Consumer
+```
+
+### Why AMQP?
+
+* Reliable delivery
+* Enterprise integration
+* Message persistence
+
+### Real World Usage
+
+* Banking
+* Logistics
+* Enterprise Systems
+
+### Expected RTT
+
+```text id="1g6w3n"
+~80 ms
+```
+
+---
+
+# 🏗 System Architecture
+
+```text id="n7g4t8"
++------------------+
+| IoT Device       |
++------------------+
+          |
+          |
+          ▼
++------------------+
+| Protocol Layer   |
+| MQTT / CoAP      |
+| AMQP             |
++------------------+
+          |
+          ▼
++------------------+
+| Broker / Server  |
+| Mosquitto        |
+| RabbitMQ         |
+| CoAP Server      |
++------------------+
+          |
+          ▼
++------------------+
+| Response         |
++------------------+
+          |
+          ▼
++------------------+
+| Dashboard        |
++------------------+
+```
+
+---
+
+# 🔴 Detailed MQTT Workflow
+
+This is the most important part of the project.
+
+The MQTT RTT measurement process works as follows.
+
+---
+
+## Step 1: Message Creation
+
+An IoT device creates a message.
+
+Example:
 
 ```json
-[
-  {"id":"inj1","type":"inject","name":"Trigger MQTT Test",
-   "repeat":"1","wires":[["mqttOut1"]]},
-  {"id":"mqttOut1","type":"mqtt out","name":"Publish Hello",
-   "topic":"iot/latency/mqtt","broker":"broker1","wires":[]},
-  {"id":"mqttIn1","type":"mqtt in","name":"Receive ACK",
-   "topic":"iot/response/mqtt","broker":"broker1","wires":[["calcRTT"]]},
-  {"id":"calcRTT","type":"function","name":"Calculate RTT",
-   "func":"var rtt = Date.now() - msg.payload.ts;\nmsg.payload = {rtt: rtt};\nreturn msg;",
-   "wires":[["gauge1","chart1"]]},
-  {"id":"gauge1","type":"ui_gauge","name":"RTT Gauge",
-   "group":"latency_dashboard","min":0,"max":200,"label":"RTT (ms)"},
-  {"id":"chart1","type":"ui_chart","name":"RTT Trend",
-   "group":"latency_dashboard","label":"Latency Over Time"},
-  {"id":"broker1","type":"mqtt-broker","name":"Mosquitto",
-   "host":"localhost","port":"1883"}
-]
+{
+  "message": "Hello",
+  "timestamp": 1710000000000
+}
+```
+
+The timestamp records the exact sending time.
+
+---
+
+## Step 2: Node-RED Inject Node
+
+Node-RED automatically generates a message every second.
+
+Purpose:
+
+* Simulate sensor traffic
+* Generate continuous test data
+
+---
+
+## Step 3: MQTT Publish
+
+The MQTT Out Node publishes data to:
+
+```text id="e12ws9"
+iot/latency/mqtt
 ```
 
 ---
 
-## ✨ Features
+## Step 4: Mosquitto Broker Processing
 
-| Feature | Description |
-|---------|-------------|
-| 🔴 **Node-RED Flow** | Visual flow canvas with animated data packets flowing through wires per protocol |
-| 🦟 **MQTT Broker Monitor** | Live Mosquitto log — PUB/SUB messages with topic, payload, QoS, timestamp, and RTT |
-| 📊 **Node-RED Dashboard** | Gauge needles + trend charts per protocol, exactly like `localhost:1880/ui` |
-| 📡 **Data Transfer Diagram** | Animated Device → Broker → Server flow with live packet visualization |
-| 📈 **Visual Analysis** | RTT comparison bar chart, latency-over-time line chart, distribution histogram |
-| 📋 **Summary Stats Table** | Min / Avg / Max / StdDev per protocol with ranked medals |
-| 🎓 **Academic Mapping** | CO3, CO5, SDG 9 relevance with full explanation |
-| 🛠 **Setup Guide** | Step-by-step Node-RED + Mosquitto + RabbitMQ + Python instructions |
+Mosquitto receives the message.
+
+Broker responsibilities:
+
+* Accept connection
+* Validate packet
+* Route message
+* Forward to subscribers
 
 ---
 
-## 🚀 Quick Start (Web Demo)
+## Step 5: Subscriber Receives Message
+
+Python subscriber listens on:
+
+```text id="o6b67t"
+iot/latency/mqtt
+```
+
+When received:
+
+1. Read timestamp
+2. Generate ACK
+3. Send ACK back
+
+---
+
+## Step 6: ACK Published
+
+ACK topic:
+
+```text id="5mkwu7"
+iot/response/mqtt
+```
+
+---
+
+## Step 7: RTT Calculation
+
+Node-RED receives ACK.
+
+Function node executes:
+
+```javascript
+var rtt = Date.now() - msg.payload.timestamp;
+```
+
+---
+
+## Step 8: Dashboard Visualization
+
+Results displayed on:
+
+* Gauge
+* Line Chart
+* Statistics Table
+* Protocol Ranking
+
+---
+
+# 🔴 Why Mosquitto?
+
+Mosquitto acts as the communication hub.
+
+Functions:
+
+* Message routing
+* Client authentication
+* Topic management
+* QoS handling
+
+Supported QoS:
+
+| Level | Meaning       |
+| ----- | ------------- |
+| QoS 0 | At most once  |
+| QoS 1 | At least once |
+| QoS 2 | Exactly once  |
+
+---
+
+# 🔴 Why Node-RED?
+
+Node-RED simplifies IoT workflow creation.
+
+Benefits:
+
+* Visual programming
+* Drag-and-drop interface
+* Real-time dashboards
+* Easy MQTT integration
+
+Node-RED handles:
+
+1. Message injection
+2. MQTT publishing
+3. ACK reception
+4. RTT calculation
+5. Dashboard updates
+
+---
+
+# 📊 Dashboard Components
+
+## Protocol Comparison Chart
+
+Displays average RTT.
+
+Purpose:
+
+* Compare protocol performance
+
+---
+
+## Live Gauge
+
+Shows current RTT.
+
+Purpose:
+
+* Instant latency monitoring
+
+---
+
+## Line Chart
+
+Displays RTT over time.
+
+Purpose:
+
+* Detect spikes
+* Identify network instability
+
+---
+
+## Distribution Histogram
+
+Shows latency distribution.
+
+Purpose:
+
+* Understand consistency
+
+---
+
+## Statistics Table
+
+Displays:
+
+* Minimum RTT
+* Average RTT
+* Maximum RTT
+* Standard Deviation
+
+---
+
+# 🐳 Docker Deployment Architecture
+
+```text id="z8r92m"
+Developer
+    │
+    ▼
+Docker Build
+    │
+    ▼
+Docker Image
+    │
+    ▼
+Docker Container
+    │
+    ▼
+Nginx Server
+    │
+    ▼
+React Dashboard
+```
+
+---
+
+# 🏗 Docker Build Process
+
+### Step 1
+
+Install dependencies:
 
 ```bash
-# Clone
-git clone https://github.com/YOUR_USERNAME/iot-latency-demo.git
-cd iot-latency-demo
-
-# Install & run
 npm install
-npm run dev
 ```
 
-Open `http://localhost:5173` → Click **"🚀 Start Test"** → Watch live results.
+### Step 2
 
----
-
-## 🛠 Full Stack Setup (Real Node-RED + MQTT)
-
-### Step 1 — Mosquitto MQTT Broker
+Build application:
 
 ```bash
-# Install
-sudo apt install mosquitto mosquitto-clients
-
-# Start & enable on boot
-sudo systemctl enable --now mosquitto
-
-# Verify it's running on port 1883
-mosquitto_sub -h localhost -t "iot/#" -v
-
-# In another terminal — publish a test message
-mosquitto_pub -h localhost -t "iot/latency/mqtt" -m '{"msg":"Hello","ts":1234}'
+npm run build
 ```
 
-### Step 2 — Node-RED
+### Step 3
+
+Generate production files:
+
+```text id="qj4f40"
+dist/
+```
+
+### Step 4
+
+Docker copies build files into Nginx.
+
+### Step 5
+
+Container serves application on:
+
+```text id="yooxaw"
+Port 80
+```
+
+---
+
+# 🚀 Running with Docker
+
+Build image:
 
 ```bash
-# Install
-sudo npm install -g --unsafe-perm node-red
-
-# Start
-node-red
-
-# Open http://localhost:1880
-# Install MQTT dashboard nodes:
-# Menu → Manage Palette → Install → node-red-dashboard
+docker build -t iot-latency-dashboard .
 ```
 
-Import the JSON flow from **Section 3** above, then click **Deploy**.
-View live dashboard at `http://localhost:1880/ui`.
-
-### Step 3 — RabbitMQ (AMQP)
+Run:
 
 ```bash
-sudo apt install rabbitmq-server
-sudo systemctl enable --now rabbitmq-server
-
-# Optional management UI
-sudo rabbitmq-plugins enable rabbitmq_management
-# http://localhost:15672  (guest / guest)
+docker run -d \
+--name iot-dashboard \
+-p 8080:80 \
+iot-latency-dashboard
 ```
 
-### Step 4 — Python Test Scripts
+Open:
 
-```bash
-pip install paho-mqtt aiocoap pika
-
-python latency_test.py --iterations 100
-```
-
-#### `latency_test.py`
-
-```python
-import time
-import paho.mqtt.client as mqtt
-
-BROKER = "localhost"
-RESULTS = []
-START_TS = {}
-
-def on_connect(client, userdata, flags, rc):
-    client.subscribe("iot/response/mqtt")
-
-def on_message(client, userdata, msg):
-    rtt = time.time() * 1000 - float(msg.payload)
-    RESULTS.append(rtt)
-
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-client.connect(BROKER, 1883, 60)
-client.loop_start()
-
-for i in range(100):
-    ts = str(time.time() * 1000)
-    client.publish("iot/latency/mqtt", ts)
-    time.sleep(0.1)
-
-client.loop_stop()
-
-avg = sum(RESULTS) / len(RESULTS)
-print(f"MQTT  → Avg: {avg:.1f}ms | Min: {min(RESULTS):.1f}ms | Max: {max(RESULTS):.1f}ms")
+```text id="r9z3u6"
+http://localhost:8080
 ```
 
 ---
 
-## 📁 Project Structure
+# 📁 Project Structure
 
-```
-iot-latency-demo/
-├── src/
-│   ├── components/
-│   │   ├── Header.tsx              # Hero header with tool badges
-│   │   ├── SimulationControl.tsx   # Run/stop + iteration picker
-│   │   ├── NodeRedFlow.tsx         # 🔴 Node-RED canvas visualization
-│   │   ├── MQTTBrokerMonitor.tsx   # 🦟 Mosquitto live packet log
-│   │   ├── NodeRedDashboard.tsx    # 📊 Dashboard gauges + trend charts
-│   │   ├── ArchitectureDiagram.tsx # 📡 Animated data transfer flow
-│   │   ├── Charts.tsx              # 📈 Bar, line, distribution charts
-│   │   └── Findings.tsx            # Key findings + setup guide
-│   ├── hooks/
-│   │   └── useLatencySimulation.ts # Simulation engine (normal distribution)
-│   ├── data/
-│   │   └── protocols.ts            # Protocol configs (colors, RTT params)
-│   ├── types.ts                    # TypeScript interfaces
-│   ├── index.css                   # Tailwind + custom animations
-│   ├── App.tsx                     # Main layout
-│   └── main.tsx                    # Entry point
-├── index.html
-├── package.json
-├── tailwind.config.ts
-├── vite.config.ts
-├── .gitignore
-├── LICENSE
-└── README.md
+```text id="jcgq5q"
+src/
+├── components/
+│   ├── Header.tsx
+│   ├── SimulationControl.tsx
+│   ├── NodeRedFlow.tsx
+│   ├── MQTTBrokerMonitor.tsx
+│   ├── NodeRedDashboard.tsx
+│   ├── ArchitectureDiagram.tsx
+│   ├── Charts.tsx
+│   └── Findings.tsx
+│
+├── hooks/
+│   └── useLatencySimulation.ts
+│
+├── data/
+│   └── protocols.ts
+│
+├── App.tsx
+├── main.tsx
+├── index.css
+└── types.ts
 ```
 
 ---
 
-## 🎤 Presentation Script
+# 🎓 Academic Relevance
 
-> "We built an IoT protocol latency comparison system using **Node-RED** for visual flow programming and **Mosquitto** as the MQTT broker.
->
-> The system works like this: Node-RED's inject node fires a timestamped message every second. The `mqtt out` node publishes it to Mosquitto on `iot/latency/mqtt`. A subscriber receives it, sends an ACK to `iot/response/mqtt`, and our `function` node calculates RTT = response time − request time. This result is displayed live on the Node-RED Dashboard.
->
-> We repeat this for CoAP via UDP and AMQP via RabbitMQ, running 100 iterations each.
->
-> **Results:**
-> - **CoAP** ~30ms — fastest because UDP skips connection handshake
-> - **MQTT** ~45ms — balanced speed + reliability over TCP via Mosquitto
-> - **AMQP** ~80ms — slowest due to enterprise-grade routing overhead
->
-> This covers **CO3** (protocol analysis), **CO5** (Node-RED + broker implementation), and **SDG 9** (resilient IoT infrastructure)."
+### CO3
 
----
+Analyze IoT communication protocols and evaluate network performance.
 
-## 🎓 Academic Relevance
+### CO5
 
-| Aspect | Details |
-|--------|---------|
-| **CO3** | Protocol analysis — comparing MQTT, CoAP, AMQP based on measured RTT data |
-| **CO5** | Implementation — Node-RED flows, Mosquitto broker config, Python test scripts |
-| **SDG 9** | Resilient infrastructure — optimizing IoT communication for efficiency and scale |
+Implement IoT communication using Node-RED, brokers, and protocol testing.
+
+### SDG 9
+
+Build resilient digital infrastructure through efficient communication technologies.
 
 ---
 
-## 🤝 Contributing
+# 🔮 Future Enhancements
 
-1. Fork the repository
-2. Create your branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -m 'Add improvement'`)
-4. Push (`git push origin feature/improvement`)
-5. Open a Pull Request
+Potential improvements:
+
+* Real MQTT broker integration
+* Live protocol testing
+* Kubernetes deployment
+* Prometheus monitoring
+* Grafana dashboards
+* WebSocket support
+* TLS-secured MQTT communication
+* Cloud deployment on AWS or Azure
 
 ---
 
-## 📄 License
+# 🤝 Contributing
 
-MIT License — see [LICENSE](LICENSE) for details.
+1. Fork repository
+2. Create feature branch
+3. Commit changes
+4. Push changes
+5. Open Pull Request
+
+---
+
+# 📄 License
+
+MIT License
+
+See LICENSE file for details.
 
 ---
 
 <p align="center">
   <strong>MQTT • CoAP • AMQP</strong><br>
-  <em>Node-RED + Mosquitto + RabbitMQ + aiocoap</em><br>
-  <sub>CO3 + CO5 + SDG 9</sub>
+  <em>React + Node-RED + Mosquitto + RabbitMQ + Docker</em><br>
+  <sub>Comprehensive IoT Protocol Performance Analysis Platform</sub>
 </p>

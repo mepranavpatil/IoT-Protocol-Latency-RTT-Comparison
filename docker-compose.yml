@@ -1,0 +1,7 @@
+services:
+  iot-dashboard:
+    build: .
+    container_name: iot-dashboard
+    ports:
+      - "8080:80"
+    restart: unless-stopped
